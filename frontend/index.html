@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Usuários</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h2>Cadastro de Usuários</h2>
+    <form id="formUsuario">
+        <input type="text" id="nome" placeholder="Nome" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <button type="submit">Cadastrar</button>
+    </form>
+
+    <h2>Lista de Usuários</h2>
+    <ul id="listaUsuarios"></ul>
+
+    <script>
+        // URL do backend
+        const apiUrl = "http://localhost:3000/usuarios";
+
+// Função para buscar e exibir usuários
+async function carregarUsuarios() {
+    // Realiza uma requisição assíncrona para obter a lista de usuários da API
+    const resposta = await fetch(apiUrl);
+
+    // Converte a resposta da requisição em formato JSON
+    const usuarios = await resposta.json();
+
+    // Obtém o elemento da lista onde os usuários serão exibidos
+    const lista = document.getElementById("listaUsuarios");
+
+    // Limpa a lista antes de adicionar os novos usuários
+    lista.innerHTML = "";
+
+    // Itera sobre cada usuário retornado pela API
+    usuarios.forEach(usuario => {
+        // Cria um novo item de lista (<li>) para cada usuário
+        const li = document.createElement("li");
+
+        // Preenche o conteúdo do item da lista com o nome e email do usuário, e botões de editar e excluir
+        li.innerHTML = `
+            ${usuario.nome} - ${usuario.email}
+            <button onclick="editarUsuario(${usuario.id}, '${usuario.nome}', '${usuario.email}')">✏️ Editar</button>
+            <button onclick="excluirUsuario(${usuario.id})">🗑 Excluir</button>
+        `;
+
+        // Adiciona o item à lista no HTML
+        lista.appendChild(li);
+    });
+}
+
+
+// Cadastrar usuário
+document.getElementById("formUsuario").addEventListener("submit", async function(event) {
+    // Evita que o formulário seja enviado da maneira tradicional (recarregando a página)
+    event.preventDefault();
+
+    // Captura o valor do campo "nome" do formulário
+    const nome = document.getElementById("nome").value;
+
+    // Captura o valor do campo "email" do formulário
+    const email = document.getElementById("email").value;
+
+    // Realiza uma requisição assíncrona para a API com os dados do nome e email
+    await fetch(apiUrl, {
+        // Define o método HTTP como POST (para enviar dados para o servidor)
+        method: "POST",
+        
+        // Define o tipo de conteúdo da requisição como JSON
+        headers: { "Content-Type": "application/json" },
+
+        // Envia os dados do nome e email em formato JSON no corpo da requisição
+        body: JSON.stringify({ nome, email })
+    });
+
+    // Após a requisição, limpa o formulário
+    this.reset();
+
+    // Recarrega a lista de usuários para refletir a adição do novo usuário
+    carregarUsuarios();
+});
+
+// Excluir usuário
+async function excluirUsuario(id) {
+    // Exibe uma confirmação para o usuário antes de excluir
+    if (confirm("Tem certeza que deseja excluir este usuário?")) {
+
+        // Envia uma requisição DELETE para a API para excluir o usuário com o ID fornecido
+        await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+
+        // Após a exclusão, recarrega a lista de usuários para refletir a mudança
+        carregarUsuarios();
+    }
+}
+
+// Editar usuário
+async function editarUsuario(id, nomeAtual, emailAtual) {
+    // Exibe um prompt para o usuário inserir o novo nome, preenchendo com o nome atual como sugestão
+    const novoNome = prompt("Novo nome:", nomeAtual);
+
+    // Exibe um prompt para o usuário inserir o novo email, preenchendo com o email atual como sugestão
+    const novoEmail = prompt("Novo email:", emailAtual);
+
+    // Verifica se o usuário preencheu tanto o nome quanto o email
+    if (novoNome && novoEmail) {
+        // Envia uma requisição PUT para atualizar o usuário com os novos dados
+        await fetch(`${apiUrl}/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome: novoNome, email: novoEmail })
+        });
+
+        // Após a atualização, recarrega a lista de usuários para refletir a mudança
+        carregarUsuarios();
+    }
+}
+
+
+        // Carregar lista ao abrir a página
+        carregarUsuarios();
+        
+    </script>
+
+</body>
+</html>
